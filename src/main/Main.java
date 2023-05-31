@@ -19,16 +19,18 @@ public class Main implements Runnable{
 	public void init() {
 		System.out.println("Initializing Game!");
 		window = new Window(WIDTH, HEIGHT, "3D Java Game Project");
+		window.setBackgroundColor(1f, 0f, 0f);
 		window.create();
 	}
 	
 	public void run() {
 		init();
 		
-		while(!window.shouldClose()) {
+		while(!window.shouldClose() && !Input.isKeyDown(GLFW.GLFW_KEY_ESCAPE)) {
 			update();
 			render();
-			if(Input.isKeyDown(GLFW.GLFW_KEY_ESCAPE)) return;
+			
+			if(Input.isKeyDown(GLFW.GLFW_KEY_F11)) window.setFullscreen(!window.isFullscreen());
 		}
 		
 		window.destroy();
@@ -37,7 +39,7 @@ public class Main implements Runnable{
 	private void update() {
 		//System.out.println("Updating Game!");
 		window.update();
-		if(Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_LEFT)) System.out.println("X: " + Input.getMouseX() + ", Y: " + Input.getMouseY());
+		if(Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_LEFT)) System.out.println("X: " + Input.getScrollX() + ", Y: " + Input.getScrollY());
 
 	}
 	

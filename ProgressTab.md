@@ -13,3 +13,8 @@
 - The window created by `Window.java` would also not be rendering anything.
     - This is caused by not having any specifications within the class to actually render graphics, a fix is to just call `GLFW.glfwSwapBuffers(window)` so that the program actually knows to render graphics within the window.
 - Setup `Input.java`, this class processes all the possible user inputs, mouseButtons, keyboardKeys and mousePositions in order to allow for the main program to accept user inputs and processes them through methods setup within the class itself.
+
+### Finalizing Window.java and Input.java classes
+- Implemented additional feature within the `Window.java` class so that it is resizable, by using `GLFWWindowSizeCallback()`, we can ensure that the windows are properly resizable and everything rendered within should resize accordingly. And by implementing resizability, we can also make fullscreen capability for the window.
+- Also enabled `GL11.GL_DEPTH_TEST` in preparation for future 3D capability.
+- Implemented mouse scrolling check so that mouse scrolls is a function in the program, through the inclusion of `GLFWScrollCallback()`
