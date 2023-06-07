@@ -115,3 +115,138 @@ public class Mesh {
 
 - After the meshes, the only thing remaining is to render the meshes onto a `Scene` object and have a `SceneRender` object to render, and then include the `SceneRender` object within the `Render` class.
 
+## Day 3
+### Extension on Mesh rendering, specifically rendering a quad
+
+Within this section, this is to extend upon the concept of rendering meshes. For my last endaevour, I manage to follow guides and understood how to easily render a basic triangle by just specifying vertices and their positiions, and that extends to rendering a quad, as a quad is basically just 2 triangles combined. And can be easily rendered if we just specified specific positions where the triangles needs to be drawn.
+
+```java
+float[] positions = new float[] {
+    -0.5f,  0.5f, 0.0f,
+    -0.5f, -0.5f, 0.0f,
+     0.5f,  0.5f, 0.0f,
+     0.5f,  0.5f, 0.0f,
+    -0.5f, -0.5f, 0.0f,
+     0.5f, -0.5f, 0.0f,
+}
+```
+
+The problem with this approach however is that we are repetitively recalling the same positions again in order to specify a specific vertex in order to draw two triangles, this is less of a problem with a simple shape such as our quad, but when we move it to a 3D object that will most likely be composed of more than 2 triangles, we could end up requiring more memories and code-type repetition in order to render a single object.
+
+**That is inefficient!**
+
+This is where the concept of index buffers are introduced following Antonio's and/or TM's guide. Utilizing index buffers, we can put an index to our vertices, or "positions", and then all we have to do is reference the order in which these vertices need to be drawn by referring to the index of their positions.
+
+| V1 | V2 | V3 | V4 |
+| --- | --- | --- | --- |
+| 0 | 1 | 2 | 3 |
+
+| 0 | 1 | 3 | 3 | 1 | 2 |
+| --- | --- | --- | --- | --- | --- |
+| V1 | V2 | V4 | V4 | V2 | V3 |
+
+Therefore our first step within this section of my progress tab is to modify the `Mesh` class such that it accepts color and indices arrays, and create vbos for each of these parameters like we do for our vertices. The VAO will now contain three VBOs, one for positions, colors and indices respectively.
+
+And then within the `SceneRender` class, as we aren't utilizing just an array of positions float buffer, we have to refactor the drawing call from `glDrawArrays` to `glDrawElements`. And then minor modifications within the vertex and fragment shaders to also accept color inputs and we have ourselves the simplest colored quad mesh.
+
+![ColoredQuad](/3D_Java_Game_Project/markdownFilePictures/renderedColoredQuad.png)
+
+### Introducing the 3D aspect of this project
+- Perspective and uniforms
+	- Currently, although our program understand the coordinate systems and have the ability to render quads, if we tweak the z-coordinate of our quads, it will still remain the same size. This is because OpenGL does not have the concept of sizes. Therefore to correct this, we need to introduce the ability to project our coordinates, and we can amend that problem by introducing a perspective projection matrix to our program so that it can handle the aspect ratio of our drawing area to prevent distortion of our object while also be able to handle the concept of distance and size of our objects.
+
+	```java
+	package core.scene;
+
+	import org.joml.Matrix4f;
+
+	public class Projection {
+
+		private static final float FOV = (float) Math.toRadians(60.0f);
+		private static final float Z_FAR = 1000.0f;
+		private static final float Z_NEAR = 0.01f;
+		
+		private Matrix4f projMatrix;
+		
+		public Projection(int width, int height) {
+			projMatrix = new Matrix4f();
+			updateProjMatrix(width, height);
+		}
+
+		public Matrix4f getProjMatrix() {
+			return projMatrix;
+		}
+		
+		public void updateProjMatrix(int width, int height) {
+			projMatrix.setPerspective(FOV, (float) width/height, Z_NEAR, Z_FAR);
+		}
+	}
+	```
+	This class takes care of the idea of a projection matrix, and we can just implement it as an object to our `Scene` class, and now our program contains the concept of perspective.
+
+	- Even though we have the infrastructure to calculate a projection matrix, this is still required to be implemented for our shaders.
+
+	```
+	We need to use it in our shader, and it should be applied to all the vertices. At first, you could think of bundling it in the vertex input (like the coordinates and the colors). In this case we would be wasting lots of space since the projection matrix is common to any vertex. You may also think of multiplying the vertices by the matrix in the java code. But then, our VBOs would be useless and we will not be using the process power available in the graphics card.
+
+	The answer is to use “uniforms”. Uniforms are global GLSL variables that shaders can use and that we will employ to pass data that is common to all elements or to a model. So, let's start with how uniforms are used in shader programs. We need to modify our vertex shader code and declare a new uniform called projectionMatrix and use it to calculate the projected position.
+	```
+
+	Therefore we need to introduce our projectionMatrix that we have created within our java program into the shaders code in order for the shader program to actually be able to calculate the distance for each pixels in accordance to our projectionMatrix, through the utilisation of the power of our graphics card. But if we are taking uniforms within our shader codes, the concept of the projectionMatrix and its values will also have to be introduced within our java code through unimplemented means, which is why I followed Antonio's guide and created a class that will help setup that uniform variable for our shader code.
+
+	```java
+	package core.graphic;
+
+	import java.util.Map;
+
+	import org.joml.Matrix4f;
+	import org.lwjgl.opengl.GL20;
+	import org.lwjgl.system.MemoryStack;
+
+	import java.util.HashMap;
+
+	public class UniformsMap {
+		
+		private int programID;
+		private Map<String, Integer> uniforms;
+		
+		public UniformsMap(int programID) {
+			this.programID = programID;
+			uniforms = new HashMap<>();
+		}
+		
+		public void createUniform(String uniformName) {
+			int uniformLocation = GL20.glGetUniformLocation(programID, uniformName);
+			
+			if(uniformLocation < 0) throw new RuntimeException("Could not find uniform [" + uniformName + "] in shader program [" + programID + "]");
+			
+			uniforms.put(uniformName, uniformLocation);
+		}
+		
+		public void setUniform(String uniformName, Matrix4f value) {
+			try(MemoryStack stack = MemoryStack.stackPush()) {
+				Integer location = uniforms.get(uniformName);
+				if(location == null) throw new RuntimeException("Could not find uniform [" + uniformName + "]");
+				GL20.glUniformMatrix4fv(location.intValue(), false, value.get(stack.mallocFloat(16)));
+			}
+		}
+	}
+	```
+
+	Now with this new class, we can easily create and introduce a new uniform whenever we require one, and for now we will have `projectionMatrix` for our first uniform. After this part of the day, if we tweak the z-value of the coordinate within our `positions` array, we can now see a stark difference as the quad will now be able to zoom in and out.
+
+- Implementation of `Model` and `Entity`
+	- To quote Antonio,
+		```
+		Let us first define the concept of a 3D model. Up to now, we have been working with meshes (a collection of vertices). A model is an structure which glues together vertices, colors, textures and materials. A model may be composed of several meshes and can be used by several game entities. A game entity represents a player and enemy, and obstacle, anything that is part of the 3D scene. In this book we will assume that an entity always is related to a model (although you can have entities that are not rendered and therefore cannot have a model). An entity has specific data such a position, which we need to use when rendering. You will see later on that we start the render process by getting the models and then draw the entities associated to that model. This is because efficiency, since several entities can share the same model is better to set up the elements that belong to the model once and later on handle the data that is specific for each entity.
+		```
+		Therefore, instead of just the simple and most fundamental concept of a `Mesh`, we now move on to a `Model`, which is an instance of a list of `Mesh` instances, with its own unique identifier. 
+		
+	- Within a 3D, or even a 2D space, models or objects have a concept of transformations, which means they can **Translate**(Move back and forth, left and right, up and down), **Rotate**(Literaly, just rotating the object) and **Scale**(Bigger or smaller), and in order to introduce this concept to our program, we have to introduce a new matrix, the `modelMatrix`, which is basically `translationMatrix * rotationMatrix * scaleMatrix`, in their correct, respective order, as matrix multiplication is not commutative. Therefore we introduce this concept into our `Entity` class and ensure that the `modelMatrix` is updated accordingly for this class.
+	
+		- To note, the modelMatrix concept is introduced within the `Entity` class rather than the `Model` class is because the `Model` class is to simply allow the program to understand the concept, parameters and data of imported 3D models in its own Model Space, therefore it is not required to understand its coordinates, rotation nor size within the world.
+
+			The `Entity` class however, is a class that's created to pertain as actual objects within a 2D/3D game-world spaces, therefore this is where the program, regardless of what its model is, is required to begin to understand its existence, and therefore its coordinates, size and rotation within an actual world space, which is why the modelMatrix is calculated here.
+
+	- After all of the above, all we have to do is add and change codes within `Scene`, `SceneRender`, `Main` and the vertex shader to accommodate for the introduction of the concept of an actual 3D model and 3D space. Within the `Main` class, we have also included the ability for the user to control the application, allowing them to move the object, which in the case of this part of our progress, is a multicolored, rotating cubic object.
+

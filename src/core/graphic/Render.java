@@ -1,10 +1,11 @@
 package core.graphic;
 
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL11;
 
 import core.engine.io.Window;
 import core.scene.Scene;
+
+import static org.lwjgl.opengl.GL11.*;
 
 public class Render {
 	
@@ -12,6 +13,7 @@ public class Render {
 	
 	public Render() {
 		GL.createCapabilities();
+		glEnable(GL_DEPTH_TEST);
 		sceneRender = new SceneRender();
 	}
 	
@@ -20,9 +22,9 @@ public class Render {
 	}
 	
 	public void render(Window window, Scene scene) {
-		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		GL11.glViewport(0, 0, window.getWidth(), window.getHeight());
+		glViewport(0, 0, window.getWidth(), window.getHeight());
 		sceneRender.render(scene);
 	}
 }

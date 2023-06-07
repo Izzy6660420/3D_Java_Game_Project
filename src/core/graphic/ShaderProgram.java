@@ -60,5 +60,11 @@ public class ShaderProgram {
 		GL20.glValidateProgram(programID);
 		if (GL20.glGetProgrami(programID, GL20.GL_VALIDATE_STATUS) == 0) throw new RuntimeException("Error validating Shader code: " + GL20.glGetProgramInfoLog(programID, 1024));
 	}
+
+	public int getProgramID() {
+		return programID;
+	}
+	
+	
 	
 }
