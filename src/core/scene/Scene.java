@@ -4,6 +4,7 @@ import java.util.Map;
 
 import core.graphic.Mesh;
 import core.graphic.Model;
+import core.graphic.TextureCache;
 
 import java.util.HashMap;
 
@@ -11,10 +12,14 @@ public class Scene {
 	
 	private Map<String, Model> modelMap;
 	private Projection projection;
+	private TextureCache textureCache;
+	private Camera camera;
 	
 	public Scene(int width, int height) {
 		modelMap = new HashMap<>();
 		projection = new Projection(width, height);
+		textureCache = new TextureCache();
+		camera = new Camera();
 	}
 	
 	public void addEntity(Entity entity) {
@@ -42,6 +47,14 @@ public class Scene {
 	
 	public void resize(int width, int height) {
 		projection.updateProjMatrix(width, height);
+	}
+
+	public TextureCache getTextureCache() {
+		return textureCache;
+	}
+
+	public Camera getCamera() {
+		return camera;
 	}
 
 }

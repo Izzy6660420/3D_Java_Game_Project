@@ -15,6 +15,7 @@ public class Window {
 	private Callable<Void> resizeFunc;
 	private String title;
 	
+	private MouseInput mouseInput;
 	private GLFWKeyCallback keyboard;
 	
 	public static class WindowOptions {
@@ -79,6 +80,8 @@ public class Window {
 		GLFW.glfwGetFramebufferSize(windowHandle, arrWidth, arrHeight);
 		width = arrWidth[0];
 		height = arrHeight[0];
+		
+		mouseInput = new MouseInput(windowHandle);
 	}
 	
 	public void update() {
@@ -113,6 +116,10 @@ public class Window {
 		return height;
 	}
 	
+	public MouseInput getMouseInput() {
+		return mouseInput;
+	}
+
 	public boolean isKeyPressed(int keyCode) {
 		return GLFW.glfwGetKey(windowHandle, keyCode) == GLFW.GLFW_PRESS;
 	}
