@@ -22,7 +22,7 @@ public class Engine {
 		targetFps = opts.fps;
 		targetUps = opts.ups;
 		this.appLogic = appLogic;
-		render = new Render();
+		render = new Render(window);
 		scene = new Scene(window.getWidth(), window.getHeight());
 		appLogic.init(window, scene, render);
 		running = true;
@@ -45,6 +45,7 @@ public class Engine {
 		float deltaUpdate = 0;
 		float deltaFps = 0;
 		
+		IGuiInstance iGuiInstance = scene.getGuiInstance();
 		long updateTime = initialTime;
 		while(running && !window.windowShouldClose()) {
 			window.pollEvents();
@@ -54,7 +55,9 @@ public class Engine {
 			deltaFps += (now - initialTime) / timeR;
 			
 			if(targetFps <= 0 || deltaFps >= 1) {
-				appLogic.input(window, scene, now - initialTime);
+				window.getMouseInput().input();
+				boolean inputConsumed = iGuiInstance != null ? iGuiInstance.handleGuiInput(scene, window) : false;
+				appLogic.input(window, scene, now - initialTime, inputConsumed);
 			}
 			
 			if(deltaUpdate >= 1) {
@@ -68,11 +71,6 @@ public class Engine {
 				render.render(window, scene);
 				deltaFps--;
 				window.update();
-			}
-			
-			if(targetFps <= 0 || deltaFps >= 1) {
-				window.getMouseInput().input();
-				appLogic.input(window, scene, now - initialTime);
 			}
 			
 			initialTime = now;
@@ -89,6 +87,9 @@ public class Engine {
 	}
 	
 	private void resize() {
-		scene.resize(window.getWidth(), window.getHeight());
+		int width = window.getWidth();
+		int height = window.getHeight();
+		scene.resize(width, height);
+		render.resize(width, height);
 	}
 }

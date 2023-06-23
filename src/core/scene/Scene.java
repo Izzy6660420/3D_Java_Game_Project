@@ -2,9 +2,11 @@ package core.scene;
 
 import java.util.Map;
 
+import core.engine.io.IGuiInstance;
 import core.graphic.Mesh;
 import core.graphic.Model;
 import core.graphic.TextureCache;
+import core.scene.lights.SceneLights;
 
 import java.util.HashMap;
 
@@ -14,6 +16,8 @@ public class Scene {
 	private Projection projection;
 	private TextureCache textureCache;
 	private Camera camera;
+	private SceneLights sceneLights;
+	private IGuiInstance guiInstance;
 	
 	public Scene(int width, int height) {
 		modelMap = new HashMap<>();
@@ -55,6 +59,22 @@ public class Scene {
 
 	public Camera getCamera() {
 		return camera;
+	}
+
+	public SceneLights getSceneLights() {
+		return sceneLights;
+	}
+
+	public void setSceneLights(SceneLights sceneLights) {
+		this.sceneLights = sceneLights;
+	}
+
+	public IGuiInstance getGuiInstance() {
+		return guiInstance;
+	}
+
+	public void setGuiInstance(IGuiInstance guiInstance) {
+		this.guiInstance = guiInstance;
 	}
 
 }

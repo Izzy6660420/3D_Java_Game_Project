@@ -10,17 +10,20 @@ import static org.lwjgl.opengl.GL11.*;
 public class Render {
 	
 	private SceneRender sceneRender;
+	private GuiRender guiRender;
 	
-	public Render() {
+	public Render(Window window) {
 		GL.createCapabilities();
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_BACK);
 		sceneRender = new SceneRender();
+		guiRender = new GuiRender(window);
 	}
 	
 	public void cleanup() {
 		sceneRender.cleanup();
+		guiRender.cleanup();
 	}
 	
 	public void render(Window window, Scene scene) {
@@ -28,5 +31,10 @@ public class Render {
 		
 		glViewport(0, 0, window.getWidth(), window.getHeight());
 		sceneRender.render(scene);
+		guiRender.render(scene);
+	}
+	
+	public void resize(int width, int height) {
+		guiRender.resize(width, height);
 	}
 }
